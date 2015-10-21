@@ -1,0 +1,63 @@
+upstream fpms {
+{% for service in services %}    server unix:/var/run/durian/{{ service }}/php-fpm.sock;
+{% endfor %}}
+
+upstream bb-dev-pineapple-sock {
+    server unix:/var/run/pineapple/bb.dev.pineapple.sock;
+}
+
+server {
+        server_name bb.fuck;
+
+        root /home/durian/bb.dev.d2/current/web;
+
+        error_log /var/log/nginx/bb.dev.d2.error.log;
+        access_log /var/log/nginx/m.bb.dev.d2.access.log custom;
+
+        location ~ ^/api/session/\S+$ {
+          if ($request_method = GET) {
+            proxy_pass http://bb-dev-pineapple-sock$uri$is_args$args;
+            access_log /var/log/nginx/bb.dev.pineapples.access.log custom;
+            #access_log off;
+          }
+
+          if ($request_method != GET) {
+            rewrite ^(.*)$ /app.php/$1 last;
+          }
+        }
+
+        location ~ ^/api/user/\d+/session$ {
+          if ($request_method = GET) {
+            proxy_pass http://bb-dev-pineapple-sock$uri$is_args$args;
+            access_log /var/log/nginx/bb.dev.pineapples.access.log custom;
+            #access_log off;
+          }
+
+          if ($request_method != GET) {
+            rewrite ^(.*)$ /app.php/$1 last;
+          }
+        }
+
+        # strip app.php/ prefix if it is present
+        rewrite ^/app\.php/?(.*)$ /$1 permanent;
+
+        location / {
+                index app.php;
+                if (-f $request_filename) {
+                        break;
+                }
+                rewrite ^(.*)$ /app.php/$1 last;
+        }
+
+        # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+        location ~ ^/(app|app_dev|apc)\.php(/|$) {
+                if ($request_method = GET) {
+                    access_log /var/log/nginx/s.bb.dev.d2.access.log custom;
+                }
+                fastcgi_pass  fpms;
+                fastcgi_split_path_info ^(.+\.php)(/.*)$;
+                include       fastcgi_params;
+                fastcgi_param SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+                fastcgi_param  HTTPS              off;
+        }
+}
