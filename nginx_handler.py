@@ -4,6 +4,7 @@ __author__ = 'jjj'
 
 from jinja2 import Environment, PackageLoader
 import os
+import subprocess
 from subprocess import call
 import signal
 import sys
@@ -11,9 +12,10 @@ import time
 
 env = Environment(loader=PackageLoader('fuck', 'templates'))
 POLL_TIMEOUT=2
+MAX_CONTAINER_NUM = 10
 signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
-class NginxHandler:
+class Pomelo:
     def get_services(self, numbers = []):
         dirs = os.listdir('/var/run/durian')
 
@@ -61,3 +63,32 @@ class NginxHandler:
     def renew_nginx_setting(self):
         self.offline_fpm()
 
+    def find_free_space(self):
+        dirs = os.listdir('/var/run/durian')
+        for i in range(0, MAX_CONTAINER_NUM):
+            if str(i) not in dirs:
+                return str(i)
+            else:
+                continue
+
+        print "There is no Space for the new container"
+        exit(1)
+
+    def create_container(self):
+        a = self.find_free_space()
+
+        dockerRun = "docker run -d -v /var/run/durian/{0}:/var/run/durian --name fpm{0} fpm_2".format(a)
+        print dockerRun
+        proc = subprocess.Popen([dockerRun], stdout=subprocess.PIPE, shell=True)
+
+    def rolling_update(self):
+        dirs = os.listdir('/var/run/durian')
+
+        for i in dirs:
+            self.offline_fpm(i)
+            time.sleep(1)
+            dockerRestart = "docker restart fpm{0}".format(i)
+            print dockerRestart
+            proc = subprocess.Popen([dockerRestart], stdout=subprocess.PIPE, shell=True)
+
+        self.renew_nginx_setting()
