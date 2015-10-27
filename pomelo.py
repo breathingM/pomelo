@@ -36,9 +36,8 @@ class Pomelo:
 
     def reload_nginx(self):
         print "config changed. reload nginx"
-        ret = call(["nginx", "-s", "reload"])
-        if ret != 0:
-            print "reloading nginx returned: ", ret 
+        reloadNginx = "docker exec nginx nginx -s reload"
+        proc = subprocess.Popen([reloadNginx], stdout=subprocess.PIPE, shell=True)
 
     #fpmId should be a list
     def offline_fpm(self, fpmId = []):
@@ -55,7 +54,7 @@ class Pomelo:
                 raise EOFError("there is no service")
 
             self.generate_config(services)
-            self.reload_nginx() 
+            self.reload_nginx()
 
         except Exception, e:
             print "Error:", e
