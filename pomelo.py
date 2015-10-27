@@ -59,6 +59,7 @@ class Pomelo:
 
         except Exception, e:
             print "Error:", e
+            sys.exit(1)
 
     def renew_nginx_setting(self):
         self.offline_fpm()
