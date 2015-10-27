@@ -31,7 +31,7 @@ class Pomelo:
 
     def generate_config(self, services):
         template = env.get_template('cfg.tmpl')
-        with open("bb.conf", "w") as f:
+        with open("/etc/nginx/conf.d/fpm.conf", "w") as f:
             f.write(template.render(services=services))
 
     def reload_nginx(self):
@@ -89,7 +89,7 @@ class Pomelo:
 
         for i in dirs:
             self.offline_fpm(i)
-            time.sleep(1)
+            time.sleep(POLL_TIMEOUT)
             dockerRestart = "docker restart fpm{0}".format(i)
             print dockerRestart
             proc = subprocess.Popen([dockerRestart], stdout=subprocess.PIPE, shell=True)
