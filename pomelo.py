@@ -16,6 +16,10 @@ MAX_CONTAINER_NUM = 10
 signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
 class Pomelo:
+    '''
+    return the current service container id
+    except the numbers you give
+    '''
     def get_services(self, numbers = []):
         dirs = os.listdir('/var/run/durian')
 
@@ -29,24 +33,23 @@ class Pomelo:
 
         return dirs
 
+    # generate nginx setting by template
     def generate_config(self, services):
         template = env.get_template('cfg.tmpl')
         with open("/etc/nginx/conf.d/fpm.conf", "w") as f:
             f.write(template.render(services=services))
 
+    # reload nginx setting
     def reload_nginx(self):
         print "config changed. reload nginx"
         reloadNginx = "docker exec nginx nginx -s reload"
         proc = subprocess.Popen([reloadNginx], stdout=subprocess.PIPE, shell=True)
 
-    #fpmId should be a list
+    # let some fpm containers offline, fpmId should be a list
     def offline_fpm(self, fpmId = []):
         fpmId = map(str, fpmId)
 
         try:
-
-            #if fpmId != "" and not fpmId.isdigit():
-            #        raise ValueError('fpmId must be a number') 
 
             services = self.get_services(fpmId)
 
@@ -60,9 +63,12 @@ class Pomelo:
             print "Error:", e
             sys.exit(1)
 
+    # update the setting of nginx
     def renew_nginx_setting(self):
         self.offline_fpm()
 
+    # search in /var/run/durian and trying to
+    # find an available space to run a new container
     def find_free_space(self):
         dirs = os.listdir('/var/run/durian')
         for i in range(0, MAX_CONTAINER_NUM):
@@ -74,6 +80,8 @@ class Pomelo:
         print "There is no Space for the new container"
         exit(1)
 
+    
+    # run a new fpm container
     def create_container(self):
         a = self.find_free_space()
 
@@ -83,6 +91,10 @@ class Pomelo:
         print dockerRun
         proc = subprocess.Popen([dockerRun], stdout=subprocess.PIPE, shell=True)
 
+    '''
+    restart each fpm container one by one
+    before that it will offline it from nginx
+    '''
     def rolling_update(self):
         dirs = os.listdir('/var/run/durian')
 
@@ -95,6 +107,10 @@ class Pomelo:
 
         self.renew_nginx_setting()
 
+    '''
+    put the container offline
+    and remove the container, delete the sock in /var/run/durian
+    '''
     def delete_container(self, fpmId):
         fpmId = map(str, fpmId)
         self.offline_fpm(fpmId)
