@@ -9,6 +9,7 @@ from subprocess import call
 import signal
 import sys
 import time
+import socket
 
 env = Environment(loader=PackageLoader('fuck', 'templates'))
 POLL_TIMEOUT=2
@@ -80,14 +81,24 @@ class Pomelo:
         print "There is no Space for the new container"
         exit(1)
 
-    
     # run a new fpm container
     def create_container(self):
         a = self.find_free_space()
+        hostname = socket.gethostname()
+
+        # if m.redis is setting in /etc/hosts 
+        # then fetch it or set it to empty redisIp
+        try:
+            redisIp = socket.gethostbyname('m.redis')
+            hosts = "--add-host m.redis:{0}".format(redisIp)
+        except:
+            hosts = ""
 
         dockerRun = "docker run -d --privileged -v /etc/localtime:/etc/localtime \
                     -v /var/run/durian/{0}:/var/run/durian -v /var/log/php-fpm:/var/log/php-fpm \
-                    -v /home/durian:/home/durian -v /dev/shm:/dev/shm --name fpm{0} fpm_2".format(a)
+                    -v /home/durian:/home/durian -v /dev/shm:/dev/shm --name fpm{0} \
+                    {2} --hostname {1}_fpm fpm_2".format(a, hostname, hosts)
+
         print dockerRun
         proc = subprocess.Popen([dockerRun], stdout=subprocess.PIPE, shell=True)
 
