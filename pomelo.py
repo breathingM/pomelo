@@ -10,10 +10,11 @@ import signal
 import sys
 import time
 import socket
+import re
 
 env = Environment(loader=PackageLoader('fuck', 'templates'))
 POLL_TIMEOUT=2
-MAX_CONTAINER_NUM = 10
+MAX_CONTAINER_NUM = 20
 signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
 class Pomelo:
@@ -23,6 +24,21 @@ class Pomelo:
     '''
     def get_services(self, numbers = []):
         dirs = os.listdir('/var/run/durian')
+        oldSock = []
+
+        # if there has any fpm_old container
+        # dont return the sock of them
+        proc = subprocess.Popen(["docker ps | grep -o -E 'old\w+'"], stdout=subprocess.PIPE, shell=True)
+        oldContainersName = proc.stdout.readlines()
+
+        if oldContainersName:
+            pattern = re.compile(r'\d')
+            for i in oldContainersName:
+                item = re.search(pattern, i)
+                oldSock.append(item.group())
+
+            for sock in oldSock:
+                dirs.remove(sock)
 
         if len(numbers) != 0:
             try:
@@ -99,14 +115,33 @@ class Pomelo:
                     -v /home/durian:/home/durian -v /dev/shm:/dev/shm --name fpm{0} \
                     {2} --hostname {1}_fpm fpm_2".format(a, hostname, hosts)
 
-        print dockerRun
+        print "running fpm{0}".format(a)
         proc = subprocess.Popen([dockerRun], stdout=subprocess.PIPE, shell=True)
+
+    '''
+    create the same amount of containers
+    and redirect the request to newer containers but keep old containers
+    '''
+    def rolling_update(self):
+        oldDirs = os.listdir('/var/run/durian')
+
+        for i in range(len(oldDirs)):
+            self.create_container()
+            time.sleep(2)
+
+        # rename the older container
+        for i in oldDirs:
+            dockerRename = "docker rename fpm{0} fpm_old{0}".format(i)
+            print dockerRename
+            subprocess.Popen([dockerRename], stdout=subprocess.PIPE, shell=True)
+
+        self.renew_nginx_setting()
 
     '''
     restart each fpm container one by one
     before that it will offline it from nginx
     '''
-    def rolling_update(self):
+    def rolling_update_one_by_one(self):
         dirs = os.listdir('/var/run/durian')
 
         for i in dirs:
