@@ -168,3 +168,13 @@ class Pomelo:
             sockDelete = "rm -rf /var/run/durian/%s" % (i)
             proc = subprocess.Popen([sockDelete], stdout=subprocess.PIPE, shell=True)
 
+    '''
+    Running nginx container
+    expected function: 1.check wether nginx already exist or not
+    '''
+    def run_nginx_container(self):
+        hostname = socket.gethostname()
+        nginxRun = "docker run -d --privileged -v /dev/shm:/dev/shm -v /home/durian:/home/durian -v /etc/localtime:/etc/localtime -v /var/log/nginx:/var/log/nginx -v /var/run/durian:/var/run/durian -v /etc/nginx/conf.d:/etc/nginx/conf.d --name nginx --hostname {0}_nginx nginx_2".format(hostname)
+
+        print "Running nginx..."
+        proc = subprocess.Popen([nginxRun], stdout=subprocess.PIPE, shell=True)
