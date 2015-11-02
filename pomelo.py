@@ -116,7 +116,12 @@ class Pomelo:
                     {2} --hostname {1}_fpm fpm_2".format(a, hostname, hosts)
 
         print "running fpm{0}".format(a)
-        proc = subprocess.Popen([dockerRun], stdout=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen([dockerRun], stdout=subprocess.PIPE, stderr=subprocess.PIPE,  shell=True)
+
+        err = proc.stderr.readlines()
+
+        if "Usage of loopback devices" not in err[0]:
+            print err
 
     '''
     create the same amount of containers
