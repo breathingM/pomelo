@@ -112,7 +112,7 @@ class Pomelo:
 
         dockerRun = "docker run -d --privileged -v /etc/localtime:/etc/localtime \
                     -v /var/run/durian/{0}:/var/run/durian -v /var/log/php-fpm:/var/log/php-fpm \
-                    -v /home/durian:/home/durian -v /dev/shm:/dev/shm --name fpm{0} \
+                    -v /home/durian:/home/durian -v /dev/shm:/dev/shm --name fpm{0} -p 80:80 \
                     {2} --hostname {1}_fpm fpm_2".format(a, hostname, hosts)
 
         print "running fpm{0}".format(a)
