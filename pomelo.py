@@ -128,8 +128,10 @@ class Pomelo:
     and redirect the request to newer containers but keep old containers
     '''
     def rolling_update(self):
-        oldDirs = os.listdir('/var/run/durian')
+        self.clear_old_container()
 
+        time.sleep(1)
+        oldDirs = os.listdir('/var/run/durian')
         for i in range(len(oldDirs)):
             self.create_container()
             time.sleep(2)
@@ -175,7 +177,7 @@ class Pomelo:
 
     '''
     Running nginx container
-    expected function: 1.check wether nginx already exist or not
+    expected feature: 1.check wether nginx already exist or not
     '''
     def run_nginx_container(self):
         hostname = socket.gethostname()
@@ -183,3 +185,27 @@ class Pomelo:
 
         print "Running nginx..."
         proc = subprocess.Popen([nginxRun], stdout=subprocess.PIPE, shell=True)
+
+    '''
+    Delete old container
+    '''
+    def clear_old_container(self):
+        dockerOld = "docker ps -qa -f 'name=fpm_old'"
+        proc = subprocess.Popen([dockerOld], stdout=subprocess.PIPE, shell=True)
+
+        containers = proc.stdout.readlines()
+
+        for i in containers:
+            dockerDel = "docker rm -f {0}".format(i)
+            proc = subprocess.Popen([dockerDel], stdout=subprocess.PIPE, shell=True)
+
+            dockerName = "docker inspect --format='{{{{.Name}}}}' {0}".format(i)
+            proc = subprocess.Popen([dockerName], stdout=subprocess.PIPE, shell=True)
+            containerName = proc.stdout.readline()
+            pattern = re.compile(r'\d+')
+            item = re.search(pattern, containerName)
+            containerId = item.group()
+            print "Delete fpm_old{0}".format(containerId)
+
+            sockDelete = "rm -rf /var/run/durian/%s" % (containerId)
+            proc = subprocess.Popen([sockDelete], stdout=subprocess.PIPE, shell=True)

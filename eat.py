@@ -5,14 +5,14 @@ import getopt
 import pomelo
 
 def usage():
-    print "Usage:%s [-h] [--help|--run|--renew|--off|--update|--del|--nginx] args..." % (sys.argv[0])
+    print "Usage:%s [-h] [--help|--run|--renew|--off|--update|--del|--nginx|--clear] args..." % (sys.argv[0])
     sys.exit(0)
 
 if "__main__" == __name__:
     obj = pomelo.Pomelo()
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "h", ["help", "run", "renew", "off=", "roll", "del=", "nginx"]);
+        opts, args = getopt.getopt(sys.argv[1:], "h", ["help", "run", "renew", "off=", "roll", "del=", "nginx", "update", "clear"]);
     except getopt.GetoptError as err:
         print str(err)
         usage()
@@ -38,6 +38,8 @@ if "__main__" == __name__:
             obj.delete_container(fpmIds)
         elif o in ("--nginx"):
             obj.run_nginx_container()
+        elif o in ("--clear"):
+            obj.clear_old_container()
 
         sys.exit(0)
 
