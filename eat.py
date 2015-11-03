@@ -5,7 +5,7 @@ import getopt
 import pomelo
 
 def usage():
-    print "Usage:%s [-h] [--help|--run|--renew|--off|--roll|--del|--nginx] args..." % (sys.argv[0])
+    print "Usage:%s [-h] [--help|--run|--renew|--off|--update|--del|--nginx] args..." % (sys.argv[0])
     sys.exit(0)
 
 if "__main__" == __name__:
@@ -29,7 +29,7 @@ if "__main__" == __name__:
             for i in args:
                 fpmIds.append(i)
             obj.offline_fpm(fpmIds)
-        elif o in ("--roll"):
+        elif o in ("--update"):
             obj.rolling_update()
         elif o in ("--del"):
             fpmIds = [a]

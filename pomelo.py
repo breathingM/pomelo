@@ -32,7 +32,7 @@ class Pomelo:
         oldContainersName = proc.stdout.readlines()
 
         if oldContainersName:
-            pattern = re.compile(r'\d')
+            pattern = re.compile(r'\d+')
             for i in oldContainersName:
                 item = re.search(pattern, i)
                 oldSock.append(item.group())
